@@ -1,6 +1,8 @@
 import numpy as np
 from ReadAssemblyFile import AssemblyReader
+import sys
 
+sys.tracebacklimit = 0
 MEMORY = {}
 MEMORY_SIZE = 4096
 MAX_INST_ITER = 10_000
@@ -14,7 +16,7 @@ instruction_list = ["inc", "not", "mov", "sub",
 
 
 def main():
-    AR = AssemblyReader(assembly_filename="./Inputs/AssemblyCode_1.txt",
+    AR = AssemblyReader(assembly_filename="./Inputs/AssemblyCode_2.txt",
                         instruction_list=instruction_list)
     global MEMORY
     MEMORY = AR.data_dict.copy()
@@ -52,7 +54,7 @@ def InstructionOperator(AR):
         instruction_type = AR.code_rows[program_counter_old].split()[0]
         if instruction_type not in instruction_list:
             raise Exception(
-                "Wrong instruction type: {instruction_type} not found.")  # ERROR
+                f"Wrong instruction type: {instruction_type} not found.")
         program_counter_new = RunSingleInstruction(instruction_memory=AR.code_rows,
                                                    program_counter=program_counter_old,
                                                    label_dict=AR.label_dict)
@@ -72,20 +74,23 @@ def CheckLengthInstruction(instruction_split):
 
     if (instruction_type in ["ldi", "ld", "st", "mov", "not"]):
         if (len(instruction_split) != 3):
-            raise Exception("ERROR")
+            raise Exception(
+                f"Instruction '{instruction_type}' needs to have 3 arguments but you gave {len(instruction_split)} arguments.")
     elif (instruction_type in ["inc", "dec", "jmp", "jz"]):
         if (len(instruction_split) != 2):
-            raise Exception("ERROR")
+            raise Exception(
+                f"Instruction '{instruction_type}' needs to have 2 arguments but you gave {len(instruction_split)} arguments.")
     elif (instruction_type in ["xor", "sub", "and", "add", "or", ""]):
         if (len(instruction_split) != 4):
-            raise Exception("ERROR")
+            raise Exception(
+                f"Instruction '{instruction_type}' needs to have 4 arguments but you gave {len(instruction_split)} arguments.")
 
 
 def RunSingleInstruction(instruction_memory, program_counter, label_dict):
+    global ZERO_FLAG_REGISTER, REGISTERS, MEMORY
     instruction_split = instruction_memory[program_counter].split()
     instruction_type = instruction_split[0]
     CheckLengthInstruction(instruction_split=instruction_split)
-    global ZERO_FLAG_REGISTER, REGISTERS, MEMORY
     if (instruction_type == "ldi"):
         store_register = instruction_split[1]
         store_value = instruction_split[2]
@@ -96,7 +101,7 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
             except ValueError:
                 raise Exception(
                     f"Wrong type for {store_register} or {store_value}")
-        elif (store_value[:2]=="0x"):
+        elif (store_value[:2] == "0x"):
             try:
                 store_register = int(store_register)
                 store_value = int(store_value, 16)
@@ -243,7 +248,8 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
     elif (instruction_type == "jz"):
         label = instruction_split[1]
         if (label not in label_dict):
-            raise Exception(f"There is no {label} as label.")
+            raise Exception(
+                f"There is no '{label}' as label.\nLine {program_counter}: '{instruction_memory[program_counter]}'")
         if (ZERO_FLAG_REGISTER):
             program_counter = label_dict[label]
             return program_counter
@@ -282,6 +288,7 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
         return program_counter + 1
     else:
         raise Exception(f"Wrong instruction type: {instruction_type}")
+
 
 if __name__ == "__main__":
     main()

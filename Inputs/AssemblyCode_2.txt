@@ -1,10 +1,12 @@
 .data
  N: 60
+
+ dsa
  sum:
 .code
  ldi 0 N
  ld 0 0
- jz out //if N=0
+ jz outs //if N=0
 loop inc 1
  add 2 2 1
  dec 0

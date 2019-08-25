@@ -13,11 +13,14 @@ class AssemblyReader():
         self.AssemblyParser()
 
     def ReadAssembly(self):
-        with open(self.assembly_filename) as csv_file:
-            csv_reader = csv.reader(csv_file)
+        with open(self.assembly_filename, "r") as csv_file:
+            raw_lines = csv_file.readlines()
             self.csv_line_counter = 0
-            for row in csv_reader:
-                row = " ".join(row[0].strip().split("//")[0].split())
+            for row in raw_lines:
+                if not any(row.strip()):
+                    continue
+
+                row = " ".join(row.strip().split("//")[0].split())
                 self.csv_line_counter += 1
                 self.csv_rows.append(row)
 
@@ -32,6 +35,7 @@ class AssemblyReader():
                 is_data_reading = True
             else:
                 if is_data_reading:
+                    assert ":" in current_line, f"You need to include ':' to the variable ends in '.data' section.\nLine {line_idx}: '{current_line}'"
                     row_key, row_value = current_line.split(":")
                     try:
                         self.data_dict[row_key] = 0 if row_value == '' else int(
