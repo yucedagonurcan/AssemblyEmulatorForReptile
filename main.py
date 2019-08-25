@@ -1,6 +1,7 @@
 import numpy as np
 from ReadAssemblyFile import AssemblyReader
 import sys
+import argparse
 
 sys.tracebacklimit = 0
 MEMORY = {}
@@ -16,7 +17,13 @@ instruction_list = ["inc", "not", "mov", "sub",
 
 
 def main():
-    AR = AssemblyReader(assembly_filename="./Inputs/AssemblyCode_2.txt",
+
+    parser = argparse.ArgumentParser(description='Reptile Assembly Emulator')
+
+    parser.add_argument('--file', default=None,
+                        help="File to read Assembly Code.", type=str)
+    assembly_filename = parser.parse_args().file
+    AR = AssemblyReader(assembly_filename=assembly_filename,
                         instruction_list=instruction_list)
     global MEMORY
     MEMORY = AR.data_dict.copy()
