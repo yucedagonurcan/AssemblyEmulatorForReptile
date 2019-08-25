@@ -96,6 +96,13 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
             except ValueError:
                 raise Exception(
                     f"Wrong type for {store_register} or {store_value}")
+        elif (store_value[:2]=="0x"):
+            try:
+                store_register = int(store_register)
+                store_value = int(store_value, 16)
+            except:
+                raise Exception(
+                    f"Wrong type for {store_register} or {store_value}")
         else:
             try:
                 store_register = int(store_register)
@@ -275,7 +282,6 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
         return program_counter + 1
     else:
         raise Exception(f"Wrong instruction type: {instruction_type}")
-
 
 if __name__ == "__main__":
     main()
