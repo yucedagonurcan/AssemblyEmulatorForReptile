@@ -1,21 +1,17 @@
 .data
- N: 60
-
- dsa
- sum:
+count: 60
+array: .space 10
+char: 0xfe
 .code
- ldi 0 N
- ld 0 0
- jz outs //if N=0
-loop inc 1
- add 2 2 1
- dec 0
- jz out
- inc 1
- sub 2 2 1
- dec 0
- jz out
- jmp loop
-out ldi 0 sum
- st 2 0
-end jmp end
+ldi 0 count
+ld 0 0
+ldi 1 array
+ldi 2 char
+ld 2 2
+lpp st 2 1
+inc 1
+dec 0
+jz loop
+jmp lpp
+loop sub 1 2 3
+lp1 jmp lp1

@@ -1,5 +1,5 @@
 .data
-N:    60
+N:    0x3c
  sum:
 .code
  ldi 0 N

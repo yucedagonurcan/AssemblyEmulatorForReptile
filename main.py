@@ -4,8 +4,8 @@ import sys
 import argparse
 
 sys.tracebacklimit = 0
-MEMORY = {}
-MEMORY_SIZE = 4096
+MEMORY_SIZE = 512
+MEMORY = [0]*MEMORY_SIZE
 MAX_INST_ITER = 10_000
 ZERO_FLAG_REGISTER = 0
 GENERAL_REGISTER_SIZE = 4
@@ -26,22 +26,31 @@ def main():
     AR = AssemblyReader(assembly_filename=assembly_filename,
                         instruction_list=instruction_list)
     global MEMORY
-    MEMORY = AR.data_dict.copy()
+    MEMORY[:len(AR.data_memory)] = AR.data_memory.copy()
     InstructionOperator(AR=AR)
-    PrintMachineState()
+    PrintMachineState(data_dict=AR.data_dict)
 
 
-def PrintMachineState():
+def PrintMachineState(data_dict):
     global ZERO_FLAG_REGISTER, REGISTERS, MEMORY, PC
     print(f"Registers:")
     print(f"\tProgram Counter: {PC}")
     print(f"\tZero Flag Register: {ZERO_FLAG_REGISTER}")
     for i in range(len(REGISTERS)):
         print(f"\tReg{i}: {REGISTERS[i]}")
-    print(f"Memory:")
-    for key, val in MEMORY.items():
-        print(f"\tMemory Location #{key}: {val}")
-    print()
+    print(f"\nVariable Locations in Memory:")
+    for key, val in data_dict.items():
+        print(f"\tVariable #{key}: {val}")
+    print(f"\nMemory:")
+    row_str = ""
+    for idx, val in enumerate(MEMORY, 0):
+        if ((idx % 20 == 0) & (idx > 0)):
+            print(f"\tMemory Location #{idx -20}: {row_str}")
+            row_str = ""
+        else:
+            row_str = row_str + " " + str(val)
+
+    print(f"\tMemory Location #{idx -idx%20}: {row_str}")
 
 
 def GetFromDict(dict_to_get, key):
@@ -64,7 +73,8 @@ def InstructionOperator(AR):
                 f"Wrong instruction type: {instruction_type} not found.")
         program_counter_new = RunSingleInstruction(instruction_memory=AR.code_rows,
                                                    program_counter=program_counter_old,
-                                                   label_dict=AR.label_dict)
+                                                   label_dict=AR.label_dict,
+                                                   data_dict=AR.data_dict)
         if program_counter_old == program_counter_new:
             global PC
             PC = program_counter_old
@@ -93,7 +103,7 @@ def CheckLengthInstruction(instruction_split):
                 f"Instruction '{instruction_type}' needs to have 4 arguments but you gave {len(instruction_split)} arguments.")
 
 
-def RunSingleInstruction(instruction_memory, program_counter, label_dict):
+def RunSingleInstruction(instruction_memory, program_counter, label_dict, data_dict):
     global ZERO_FLAG_REGISTER, REGISTERS, MEMORY
     instruction_split = instruction_memory[program_counter].split()
     instruction_type = instruction_split[0]
@@ -101,10 +111,10 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
     if (instruction_type == "ldi"):
         store_register = instruction_split[1]
         store_value = instruction_split[2]
-        if (store_value in MEMORY):
+        if (store_value in data_dict):
             try:
                 store_register = int(store_register)
-                store_value = str(store_value)
+                store_value = data_dict[store_value]
             except ValueError:
                 raise Exception(
                     f"Wrong type for {store_register} or {store_value}")
@@ -274,9 +284,8 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
         try:
             dest_register = int(dest_register)
             source_register = int(source_register)
-            source_address = str(REGISTERS[source_register])
-            REGISTERS[dest_register] = int(
-                GetFromDict(MEMORY, source_address))
+            source_address = REGISTERS[source_register]
+            REGISTERS[dest_register] = MEMORY[source_address]
         except ValueError:
             raise Exception(
                 f"Wrong type for {dest_register} or {source_register}.")
@@ -286,7 +295,7 @@ def RunSingleInstruction(instruction_memory, program_counter, label_dict):
         dest_register = instruction_split[2]
         try:
             dest_register = int(dest_register)
-            dest_address = str(REGISTERS[dest_register])
+            dest_address = REGISTERS[dest_register]
             stored_register = int(stored_register)
             MEMORY[dest_address] = REGISTERS[stored_register]
         except ValueError:
